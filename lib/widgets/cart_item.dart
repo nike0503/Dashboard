@@ -41,25 +41,25 @@ class CartItem extends StatelessWidget {
         return showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-                title: Text('Are you sure?'),
-                content: Text(
-                  'Do you want to remove the item from the cart?',
-                ),
-                actions: <Widget>[
-                  FlatButton(
-                    child: Text('No'),
-                    onPressed: () {
-                      Navigator.of(ctx).pop(false);
-                    },
-                  ),
-                  FlatButton(
-                    child: Text('Yes'),
-                    onPressed: () {
-                      Navigator.of(ctx).pop(true);
-                    },
-                  ),
-                ],
+            title: Text('Are you sure?'),
+            content: Text(
+              'Do you want to remove the item from the cart?',
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: Text('No'),
+                onPressed: () {
+                  Navigator.of(ctx).pop(false);
+                },
               ),
+              FlatButton(
+                child: Text('Yes'),
+                onPressed: () {
+                  Navigator.of(ctx).pop(true);
+                },
+              ),
+            ],
+          ),
         );
       },
       onDismissed: (direction) {
@@ -83,7 +83,31 @@ class CartItem extends StatelessWidget {
             ),
             title: Text(name),
             subtitle: Text('Total: \$${(price * quantity)}'),
-            trailing: Text('$quantity x'),
+            trailing: Container(
+              width: 100,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Expanded(
+                      child: IconButton(
+                          icon: Icon(Icons.remove),
+                          onPressed: () {
+                            Provider.of<Cart>(context).removeSingleItem(productId);
+                          })),
+                  Expanded(
+                      child: Text(
+                    '$quantity',
+                    textAlign: TextAlign.center,
+                  )),
+                  Expanded(
+                      child: IconButton(
+                          icon: Icon(Icons.add),
+                          onPressed: () {
+                            Provider.of<Cart>(context).addItem(productId, price, name);
+                          })),
+                ],
+              ),
+            ),
           ),
         ),
       ),

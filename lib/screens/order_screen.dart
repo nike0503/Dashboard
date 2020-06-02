@@ -4,7 +4,10 @@ import 'package:provider/provider.dart';
 import '../providers/orders.dart' show Orders;
 import '../widgets/order_item.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/badge.dart';
 import '../providers/sign_in.dart';
+import '../providers/cart.dart';
+import './cart_screen.dart';
 
 class OrdersScreen extends StatelessWidget {
   static const routeName = '/orders';
@@ -18,6 +21,22 @@ class OrdersScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Your Orders'),
+         actions: <Widget>[
+          Consumer<Cart>(
+            builder: (_, cart, ch) => Badge(
+              child: ch,
+              value: cart.itemCount.toString(),
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.shopping_cart,
+              ),
+              onPressed: () {
+                Navigator.of(context).pushNamed(CartScreen.routeName);
+              },
+            ),
+          ),
+        ],
       ),
       drawer: AppDrawer(),
       body: curUser == null

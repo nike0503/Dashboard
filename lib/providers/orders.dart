@@ -1,4 +1,6 @@
+import 'package:Dashboard/providers/departments.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import './cart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -36,7 +38,6 @@ class Orders with ChangeNotifier {
         .collection('orders')
         .getDocuments()
         .then((snap) => snap.documents);
-    print(_orderList[0]['amount']);
     if(_orderList == null) {
       return null;
     }
@@ -49,10 +50,11 @@ class Orders with ChangeNotifier {
         products: (_orderList[i]['products'] as List<dynamic>)
             .map(
               (item) => CartItem(
-                id: item['id'],
+                productId: item['productId'],
+                id: item['cartId'],
                 name: item['name'],
                 quantity: item['quantity'],
-                price: item['title'],
+                price: item['price'],
               ),
             )
             .toList(),
@@ -60,7 +62,6 @@ class Orders with ChangeNotifier {
       ));
     }
     _orders = loadedOrders.reversed.toList();
-
     notifyListeners();
   }
 
@@ -70,6 +71,7 @@ class Orders with ChangeNotifier {
     String userId,
     String address,
     String phone,
+
   ) async {
     final timestamp = DateTime.now();
     DocumentReference ref = await Firestore.instance
@@ -83,7 +85,8 @@ class Orders with ChangeNotifier {
       'phone': phone,
       'products': cartProducts
           .map((cp) => {
-                'id': cp.id,
+                'cartId': cp.id,
+                'productId': cp.productId,
                 'name': cp.name,
                 'price': cp.price,
                 'quantity': cp.quantity,

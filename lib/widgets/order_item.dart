@@ -19,6 +19,7 @@ class _OrderItemState extends State<OrderItem> {
 
   @override
   Widget build(BuildContext context) {
+    print(widget.order.products[0].price);
     return Card(
       margin: EdgeInsets.all(10),
       child: Column(
@@ -51,7 +52,7 @@ class _OrderItemState extends State<OrderItem> {
                                 prod.name,
                                 style: TextStyle(
                                   fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                                  // fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(

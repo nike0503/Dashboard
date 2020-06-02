@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class Product with ChangeNotifier {
   final String name;
   final String id;
+  final String description;
   final int price;
   final int quantity;
   final bool isAvailable;
@@ -10,8 +11,9 @@ class Product with ChangeNotifier {
   Product({
     @required this.id,
     @required this.name,
+    @required this.description,
     @required this.price,
-    @required this.quantity,
-    @required this.isAvailable, 
-  });
+    @required this.quantity, 
+    @required this.isAvailable,
+  }) ;
 }
