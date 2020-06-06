@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/cart.dart';
 import '../providers/sign_in.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -36,6 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
       splashColor: Colors.grey,
       onPressed: () {
         auth.signInWithGoogle().whenComplete(() {
+          Provider.of<Cart>(context).getCart(auth.curUser.uid);
           Navigator.of(context).pop();
         });
       },

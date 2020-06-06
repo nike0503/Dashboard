@@ -1,6 +1,4 @@
-import 'package:Dashboard/providers/departments.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import './cart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -30,15 +28,14 @@ class Orders with ChangeNotifier {
   }
 
   Future<void> fetchAndSetOrders(String userId) async {
-    print(userId);
     final List<OrderItem> loadedOrders = [];
     List _orderList = await Firestore.instance
-        .collection('Orders')
+        .collection('Users')
         .document(userId)
-        .collection('orders')
+        .collection('Orders')
         .getDocuments()
         .then((snap) => snap.documents);
-    if(_orderList == null) {
+    if (_orderList == null) {
       return null;
     }
     for (int i = 0; i < _orderList.length; i++) {
@@ -50,11 +47,10 @@ class Orders with ChangeNotifier {
         products: (_orderList[i]['products'] as List<dynamic>)
             .map(
               (item) => CartItem(
-                productId: item['productId'],
-                id: item['cartId'],
-                name: item['name'],
-                quantity: item['quantity'],
+                prodName: item['prodName'],
                 price: item['price'],
+                productId: item['productId'],
+                quantity: item['quantity'],
               ),
             )
             .toList(),
@@ -65,19 +61,18 @@ class Orders with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addOrder(
+  Future<OrderItem> addOrder(
     List<CartItem> cartProducts,
     int total,
     String userId,
     String address,
     String phone,
-
   ) async {
     final timestamp = DateTime.now();
     DocumentReference ref = await Firestore.instance
-        .collection('Orders')
+        .collection('Users')
         .document(userId)
-        .collection('orders')
+        .collection('Orders')
         .add({
       'amount': total,
       'dateTime': timestamp.toIso8601String(),
@@ -85,24 +80,34 @@ class Orders with ChangeNotifier {
       'phone': phone,
       'products': cartProducts
           .map((cp) => {
-                'cartId': cp.id,
-                'productId': cp.productId,
-                'name': cp.name,
                 'price': cp.price,
+                'prodName': cp.prodName,
+                'productId': cp.productId,
                 'quantity': cp.quantity,
               })
           .toList(),
+    }).then((docRef) {
+      docRef.updateData({
+        'id': docRef.documentID,
+      });
+      return docRef;
     });
     _orders.insert(
         0,
         OrderItem(
-          id: ref.documentID,
-          amount: total,
-          dateTime: timestamp,
-          products: cartProducts,
-          address: address,
-          phone: phone
-        ));
+            id: ref.documentID,
+            amount: total,
+            dateTime: timestamp,
+            products: cartProducts,
+            address: address,
+            phone: phone));
     notifyListeners();
+    return OrderItem(
+        id: ref.documentID,
+        amount: total,
+        dateTime: timestamp,
+        products: cartProducts,
+        address: address,
+        phone: phone);
   }
 }

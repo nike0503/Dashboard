@@ -20,19 +20,20 @@ class DepartmentItem extends StatelessWidget {
       onTap: () {
         selectDepartment(context, department.id);
       },
-      splashColor: Theme.of(context).primaryColor,
+      splashColor: Colors.white,
       borderRadius: BorderRadius.circular(15),
       child: Container(
         padding: const EdgeInsets.all(15),
         child: Text(
           department.name,
+          textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.title,
         ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Colors.red.withOpacity(0.7),
-              Colors.red,
+              Colors.white.withOpacity(0.8),
+              Colors.white,
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

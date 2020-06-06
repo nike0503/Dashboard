@@ -8,56 +8,116 @@ import './cart.dart';
 
 class Departments with ChangeNotifier {
   List<Department> _departments = [];
-  Product _product;
+  List<Category> _categories = [];
+  List<Product> _products = [];
+  Product _reqProd;
 
-  Future<void> getData() async {
+  Future<void> getDepts() async {
     List<Department> _departmentList = [];
     List _departList = await Firestore.instance
         .collection('Departments')
         .getDocuments()
         .then((snap) => snap.documents);
+
     for (int i = 0; i < _departList.length; i++) {
-      List<Category> _categories = [];
+      _departmentList.add(Department(
+        id: _departList[i]['id'],
+        name: _departList[i]['name'],
+      ));
+    }
+
+    _departments = _departmentList;
+    notifyListeners();
+  }
+
+  Future<void> getCats(String deptId) async {
+    List<Category> _categoriesList = [];
+    List _catList = await Firestore.instance
+        .collection('Departments')
+        .document(deptId)
+        .collection('Categories')
+        .getDocuments()
+        .then((snap) => snap.documents);
+
+    for (int i = 0; i < _catList.length; i++) {
+      _categoriesList.add(Category(
+        id: _catList[i]['id'],
+        name: _catList[i]['name'],
+      ));
+    }
+
+    _categories = _categoriesList;
+    notifyListeners();
+  }
+
+  Future<void> getProds(String deptId, String catId) async {
+    List<Product> _productsList = [];
+    List _prodList = await Firestore.instance
+        .collection('Departments')
+        .document(deptId)
+        .collection("Categories")
+        .document(catId)
+        .collection('Products')
+        .getDocuments()
+        .then((snap) => snap.documents);
+
+    for (int i = 0; i < _prodList.length; i++) {
+      _productsList.add(Product(
+          id: _prodList[i]['id'],
+          name: _prodList[i]['name'],
+          price: _prodList[i]['price'],
+          quantity: _prodList[i]['quantity'],
+          isAvailable: _prodList[i]['isAvailable'],
+          description: _prodList[i]['description'],
+          imageUrl: _prodList[i]['imageUrl']));
+    }
+
+    _products = _productsList;
+    notifyListeners();
+  }
+
+  Future<Product> getProdById(String id) async {
+    Product prod;
+    List _departList = await Firestore.instance
+        .collection('Departments')
+        .getDocuments()
+        .then((snap) => snap.documents);
+    for (int i = 0; i < _departList.length; i++) {
       List _catList = await Firestore.instance
           .collection('Departments')
           .document(_departList[i].documentID.toString())
-          .collection("Categories")
+          .collection('Categories')
           .getDocuments()
           .then((snap) => snap.documents);
       for (int j = 0; j < _catList.length; j++) {
-        List<Product> _products = [];
         List _prodList = await Firestore.instance
             .collection('Departments')
             .document(_departList[i].documentID.toString())
-            .collection("Categories")
+            .collection('Categories')
             .document(_catList[j].documentID.toString())
             .collection('Products')
             .getDocuments()
             .then((snap) => snap.documents);
         for (int k = 0; k < _prodList.length; k++) {
-          _products.add(Product(
-              id: _prodList[k]['id'],
-              name: _prodList[k]['name'],
-              price: _prodList[k]['price'],
-              quantity: _prodList[k]['quantity'],
-              isAvailable: _prodList[k]['isAvailable'],
-              description: _prodList[k]['description']));
+          if (_prodList[k]['id'] == id) {
+            prod = Product(
+                id: _prodList[k]['id'],
+                name: _prodList[k]['name'],
+                price: _prodList[k]['price'],
+                quantity: _prodList[k]['quantity'],
+                isAvailable: _prodList[k]['isAvailable'],
+                description: _prodList[k]['description'],
+                imageUrl: _prodList[k]['imageUrl']);
+            
+          }
         }
-        _categories.add(Category(
-            id: _catList[j]['id'],
-            name: _catList[j]['name'],
-            products: _products));
       }
-      _departmentList.add(Department(
-          id: _departList[i]['id'],
-          name: _departList[i]['name'],
-          categories: _categories));
     }
-    _departments = _departmentList;
+    _reqProd = prod;
     notifyListeners();
+    return prod;
   }
 
-  
   Future<void> updateQuant(List<CartItem> cartItems) async {
     List _departList = await Firestore.instance
         .collection('Departments')
@@ -106,29 +166,16 @@ class Departments with ChangeNotifier {
     return [..._departments];
   }
 
-  List<Category> departCategories(String id) {
-    List<Department> department =
-        departments.where((dept) => dept.id == id).toList();
-    return department[0].categories;
+  List<Category> get categories {
+    return [..._categories];
   }
 
-  List<Product> categoryProducts(String deptId, String catId) {
-    List<Category> categories = departCategories(deptId);
-    List<Category> category =
-        categories.where((cat) => cat.name == catId).toList();
-    return category[0].products;
+  List<Product> get products {
+    return [..._products];
   }
 
-  getProductById(String id) {
-    for(int i = 0; i  <_departments.length; i++) {
-      for(int j = 0; j < _departments[i].categories.length; j++) {
-        for(int k = 0; k < _departments[i].categories[j].products.length; k++){
-          if(_departments[i].categories[j].products[k].id == id) {
-            return _departments[i].categories[j].products[k]; 
-          }
-        }
-      }
-    }
+  Product getProductById() {
+    return _reqProd;
   }
 
   // void addData() {

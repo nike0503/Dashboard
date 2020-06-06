@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/sign_in.dart';
 import '../screens/order_screen.dart';
 import '../screens/login_screen.dart';
+import '../screens/departments_overview_screen.dart';
 
 class AppDrawer extends StatefulWidget {
   @override
@@ -25,15 +26,15 @@ class _AppDrawerState extends State<AppDrawer> {
           ),
           Divider(),
           ListTile(
-            leading: Icon(Icons.shop),
+            leading: Icon(Icons.shop, color: Colors.green,),
             title: Text('Shop'),
             onTap: () {
-              Navigator.of(context).pushReplacementNamed('/');
+              Navigator.of(context).pushReplacementNamed(DepartmentOverviewScreen.routeName);
             },
           ),
           Divider(),
           ListTile(
-            leading: Icon(Icons.payment),
+            leading: Icon(Icons.payment, color: Colors.blue,),
             title: Text('Orders'),
             onTap: () {
               Navigator.of(context)
@@ -51,7 +52,7 @@ class _AppDrawerState extends State<AppDrawer> {
 
   Widget loginLogout(String text, Auth auth) {
     return ListTile(
-      leading: Icon(Icons.exit_to_app),
+      leading: Icon(Icons.exit_to_app, color: Colors.red,),
       title: Text(text),
       onTap: text == 'Login'
           ? () {

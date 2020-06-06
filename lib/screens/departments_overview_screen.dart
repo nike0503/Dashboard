@@ -1,14 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import '../providers/departments.dart';
 import '../providers/cart.dart';
+import '../providers/sign_in.dart';
 import '../widgets/department_item.dart';
 import '../widgets/badge.dart';
 import '../widgets/app_drawer.dart';
 import './cart_screen.dart';
 
 class DepartmentOverviewScreen extends StatefulWidget {
+  static const routeName = '/department-names';
   @override
   _DepartmentOverviewScreenState createState() =>
       _DepartmentOverviewScreenState();
@@ -16,40 +21,53 @@ class DepartmentOverviewScreen extends StatefulWidget {
 
 class _DepartmentOverviewScreenState extends State<DepartmentOverviewScreen> {
   var _isLoading = false;
-  var _isInit = true;
 
-  @override
-  void initState() {
-    super.initState();
-  }
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
 
-  @override
-  void didChangeDependencies() {
-    if (_isInit) {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  Future<void> _handleRefresh() {
+    final Completer<void> completer = Completer<void>();
+
+    Timer(const Duration(seconds: 3), () {
+      completer.complete();
+    });
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    Provider.of<Departments>(context).getDepts().then((_) {
       setState(() {
-        _isLoading = true;
+        _isLoading = false;
       });
-      Provider.of<Departments>(context).getData().then((_) {
-        setState(() {
-          _isLoading = false;
-        });
-      });
-    }
-    _isInit = false;
-    super.didChangeDependencies();
+    });
+
+    return completer.future.then<void>((_) {
+      _scaffoldKey.currentState?.showSnackBar(SnackBar(
+          content: const Text('Refresh complete'),
+          action: SnackBarAction(
+              label: 'RETRY',
+              onPressed: () {
+                _refreshIndicatorKey.currentState.show();
+              })));
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final departmentData = Provider.of<Departments>(context);
+    final dept = Provider.of<Departments>(context);
+    final curUser = Provider.of<Auth>(context).curUser;
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.teal,
         title: Text('Departments'),
         actions: <Widget>[
           Consumer<Cart>(
             builder: (_, cart, ch) => Badge(
               child: ch,
-              value: cart.itemCount.toString(),
+              value: curUser == null ? '0' : cart.itemCount.toString(),
             ),
             child: IconButton(
               icon: Icon(
@@ -62,21 +80,26 @@ class _DepartmentOverviewScreenState extends State<DepartmentOverviewScreen> {
           ),
         ],
       ),
+      backgroundColor: Colors.white54,
       body: _isLoading
           ? Center(
               child: CircularProgressIndicator(),
             )
-          : GridView.builder(
-              itemCount: departmentData.departments.length,
-              padding: const EdgeInsets.all(10.0),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 3 / 2,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10),
-              itemBuilder: (ctx, i) => ChangeNotifierProvider.value(
-                  value: departmentData.departments[i],
-                  child: DepartmentItem()),
+          : LiquidPullToRefresh(
+              color: Colors.teal,
+              onRefresh: _handleRefresh,
+              showChildOpacityTransition: false,
+              child: GridView.builder(
+                itemCount: dept.departments.length,
+                padding: const EdgeInsets.all(10.0),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 1,
+                    childAspectRatio: 5 / 1,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10),
+                itemBuilder: (ctx, i) => ChangeNotifierProvider.value(
+                    value: dept.departments[i], child: DepartmentItem()),
+              ),
             ),
       drawer: AppDrawer(),
     );

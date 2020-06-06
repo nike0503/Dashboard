@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import './screens/splash_screen.dart';
 import './screens/departments_overview_screen.dart';
 import './screens/categories_overview_screen.dart';
 import './screens/products_overview_screen.dart';
@@ -8,11 +9,11 @@ import './screens/login_screen.dart';
 import './screens/cart_screen.dart';
 import './screens/order_screen.dart';
 import './screens/product_detail_screen.dart';
-import './screens/order_placed.dart';
 import './providers/departments.dart';
 import './providers/cart.dart';
 import './providers/sign_in.dart';
 import './providers/orders.dart';
+import './providers/phone_number.dart';
 
 void main() {
   runApp(MyApp());
@@ -34,12 +35,16 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider.value(
           value: Orders(),
+        ),
+        ChangeNotifierProvider.value(
+          value: PhoneNumber(),
         )
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Shop',
         theme: ThemeData(
-          primaryColor: Colors.pink,
+          primaryColor: Colors.teal,
           accentColor: Colors.amber,
           canvasColor: Color.fromRGBO(255, 254, 229, 1),
           textTheme: ThemeData.light().textTheme.copyWith(
@@ -55,15 +60,16 @@ class MyApp extends StatelessWidget {
                 ),
               ),
         ),
-        home: DepartmentOverviewScreen(),
+        home: SplashScreen(),
         routes: {
+          DepartmentOverviewScreen.routeName: (ctx) =>
+              DepartmentOverviewScreen(),
           CategoryOverviewScreen.routeName: (ctx) => CategoryOverviewScreen(),
           ProductOverviewScreen.routeName: (ctx) => ProductOverviewScreen(),
           CartScreen.routeName: (ctx) => CartScreen(),
           LoginScreen.routeName: (ctx) => LoginScreen(),
           OrdersScreen.routeName: (ctx) => OrdersScreen(),
           ProductDetailScreen.routeName: (ctx) => ProductDetailScreen(),
-          OrderPlaced.routeName: (ctx) => OrderPlaced()
         },
       ),
     );

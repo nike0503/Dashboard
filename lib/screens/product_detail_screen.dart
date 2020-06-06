@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../widgets/app_drawer.dart';
 import '../widgets/badge.dart';
@@ -32,25 +33,38 @@ class ProductDetailScreen extends StatelessWidget {
                         'ADD TO CART',
                         style: TextStyle(fontSize: 15),
                       ),
-                      onPressed: () {
-                        cart.addItem(loadedProduct.id, loadedProduct.price,
-                            loadedProduct.name);
-                        Scaffold.of(context).hideCurrentSnackBar();
-                        Scaffold.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Added item to cart!',
-                            ),
-                            duration: Duration(seconds: 2),
-                            action: SnackBarAction(
-                              label: 'UNDO',
-                              onPressed: () {
-                                cart.removeSingleItem(loadedProduct.id);
-                              },
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: curUser == null
+                          ? () {
+                              Scaffold.of(context).hideCurrentSnackBar();
+                              Scaffold.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Login to add items to cart',
+                                  ),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          : () {
+                              cart.addCartElement(
+                                  curUser.uid, loadedProduct.id, loadedProduct.name, loadedProduct.price);
+                              Scaffold.of(context).hideCurrentSnackBar();
+                              Scaffold.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Added item to cart!',
+                                  ),
+                                  duration: Duration(seconds: 2),
+                                  action: SnackBarAction(
+                                    label: 'UNDO',
+                                    onPressed: () {
+                                      cart.removeSingleItem(
+                                          curUser.uid, loadedProduct.id);
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
                     );
                   },
                 ),
@@ -89,7 +103,7 @@ class ProductDetailScreen extends StatelessWidget {
           Consumer<Cart>(
             builder: (_, cart, ch) => Badge(
               child: ch,
-              value: cart.itemCount.toString(),
+              value: curUser == null ? '0' : cart.itemCount.toString(),
             ),
             child: IconButton(
               icon: Icon(
@@ -109,9 +123,18 @@ class ProductDetailScreen extends StatelessWidget {
             Container(
               height: 300,
               width: double.infinity,
-              child: Image.network(
-                'https://homepages.cae.wisc.edu/~ece533/images/watch.png',
-                fit: BoxFit.cover,
+              child: CachedNetworkImage(
+                imageUrl: loadedProduct.imageUrl,
+                imageBuilder: (context, imageProvider) => Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: imageProvider,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                placeholder: (context, url) => CircularProgressIndicator(),
+                errorWidget: (context, url, error) => const Icon(Icons.error),
               ),
             ),
             SizedBox(height: 10),
@@ -139,7 +162,7 @@ class ProductDetailScreen extends StatelessWidget {
                 ),
                 Chip(
                   label: Text(
-                    '\$${loadedProduct.price}',
+                    '₹${loadedProduct.price}',
                     style: TextStyle(
                       color: Theme.of(context).primaryTextTheme.title.color,
                     ),
@@ -152,11 +175,12 @@ class ProductDetailScreen extends StatelessWidget {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 10),
               width: double.infinity,
-              child: Text(
-                loadedProduct.isAvailable ? 'Available' : 'Out of Stock',
-                softWrap: true,
-                style: TextStyle(fontSize: 20,)
-              ),
+              child:
+                  Text(loadedProduct.isAvailable ? 'Available' : 'Out of Stock',
+                      softWrap: true,
+                      style: TextStyle(
+                        fontSize: 20,
+                      )),
             ),
           ],
         ),

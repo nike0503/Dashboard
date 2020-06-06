@@ -14,7 +14,6 @@ class OrdersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('building orders');
     // final orderData = Provider.of<Orders>(context);
     final auth = Provider.of<Auth>(context);
     final curUser = auth.curUser;
@@ -25,7 +24,7 @@ class OrdersScreen extends StatelessWidget {
           Consumer<Cart>(
             builder: (_, cart, ch) => Badge(
               child: ch,
-              value: cart.itemCount.toString(),
+              value: curUser == null ? '0' : cart.itemCount.toString(),
             ),
             child: IconButton(
               icon: Icon(

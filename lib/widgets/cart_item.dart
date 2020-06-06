@@ -2,70 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/cart.dart';
+import '../providers/sign_in.dart';
 
-class CartItem extends StatelessWidget {
-  final String id;
+class CartItem extends StatefulWidget {
   final String productId;
-  final int price;
   final int quantity;
+  final int price;
   final String name;
 
   CartItem(
-    this.id,
-    this.productId,
-    this.price,
-    this.quantity,
     this.name,
+    this.price,
+    this.productId,
+    this.quantity,
   );
 
   @override
+  _CartItemState createState() => _CartItemState();
+}
+
+class _CartItemState extends State<CartItem> {
+
+
+  @override
   Widget build(BuildContext context) {
-    return Dismissible(
-      key: ValueKey(id),
-      background: Container(
-        color: Theme.of(context).errorColor,
-        child: Icon(
-          Icons.delete,
-          color: Colors.white,
-          size: 40,
-        ),
-        alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: 20),
-        margin: EdgeInsets.symmetric(
-          horizontal: 15,
-          vertical: 4,
-        ),
-      ),
-      direction: DismissDirection.endToStart,
-      confirmDismiss: (direction) {
-        return showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text('Are you sure?'),
-            content: Text(
-              'Do you want to remove the item from the cart?',
-            ),
-            actions: <Widget>[
-              FlatButton(
-                child: Text('No'),
-                onPressed: () {
-                  Navigator.of(ctx).pop(false);
-                },
-              ),
-              FlatButton(
-                child: Text('Yes'),
-                onPressed: () {
-                  Navigator.of(ctx).pop(true);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-      onDismissed: (direction) {
-        Provider.of<Cart>(context, listen: false).removeItem(productId);
-      },
-      child: Card(
+    final auth = Provider.of<Auth>(context);
+    final curUser = auth.curUser;
+    return Card(
         margin: EdgeInsets.symmetric(
           horizontal: 15,
           vertical: 4,
@@ -77,12 +40,12 @@ class CartItem extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.all(5),
                 child: FittedBox(
-                  child: Text('\$$price'),
+                  child: Text('₹${widget.price}'),
                 ),
               ),
             ),
-            title: Text(name),
-            subtitle: Text('Total: \$${(price * quantity)}'),
+            title: Text(widget.name),
+            subtitle: Text('Total: ₹${(widget.price * widget.quantity)}'),
             trailing: Container(
               width: 100,
               child: Row(
@@ -90,27 +53,27 @@ class CartItem extends StatelessWidget {
                 children: <Widget>[
                   Expanded(
                       child: IconButton(
-                          icon: Icon(Icons.remove),
+                          icon: Icon(Icons.remove, color: Colors.red,),
                           onPressed: () {
-                            Provider.of<Cart>(context).removeSingleItem(productId);
+                            Provider.of<Cart>(context).removeSingleItem(curUser.uid,widget.productId);
                           })),
                   Expanded(
                       child: Text(
-                    '$quantity',
+                    '${widget.quantity}',
                     textAlign: TextAlign.center,
                   )),
                   Expanded(
                       child: IconButton(
-                          icon: Icon(Icons.add),
+                          icon: Icon(Icons.add, color: Colors.green,),
                           onPressed: () {
-                            Provider.of<Cart>(context).addItem(productId, price, name);
+                            Provider.of<Cart>(context).addCartElement(curUser.uid,widget.productId,widget.name,widget.price);
+
                           })),
                 ],
               ),
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }

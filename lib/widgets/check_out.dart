@@ -1,11 +1,14 @@
+import 'package:Dashboard/providers/departments.dart';
+import 'package:Dashboard/screens/product_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../screens/departments_overview_screen.dart';
 import '../providers/cart.dart';
 import '../providers/product.dart';
 import '../providers/sign_in.dart';
 import '../providers/orders.dart';
-import '../screens/order_placed.dart';
+import '../providers/phone_number.dart';
 
 class OrderForm extends StatefulWidget {
   const OrderForm({
@@ -25,6 +28,12 @@ class _OrderFormState extends State<OrderForm> {
   int quantity = 1;
   TextEditingController _addressController = TextEditingController();
   TextEditingController _phoneController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
   final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
@@ -41,11 +50,13 @@ class _OrderFormState extends State<OrderForm> {
                   Expanded(
                       child: IconButton(
                           icon: Icon(Icons.remove),
-                          onPressed: () {
-                            setState(() {
-                              quantity -= 1;
-                            });
-                          })),
+                          onPressed: quantity > 1
+                              ? () {
+                                  setState(() {
+                                    quantity -= 1;
+                                  });
+                                }
+                              : () {})),
                   Expanded(
                       child: Text(
                     '$quantity',
@@ -123,11 +134,13 @@ class _OrderFormState extends State<OrderForm> {
                     padding: const EdgeInsets.all(8.0),
                     child: widget.product == null
                         ? OrderButtonCart(
+                            formKey: _formKey,
                             cart: widget.cart,
                             address: _addressController.text,
                             phone: _phoneController.text,
                           )
                         : OrderButton(
+                            formKey: _formKey,
                             product: widget.product,
                             address: _addressController.text,
                             phone: _phoneController.text,
@@ -146,11 +159,13 @@ class _OrderFormState extends State<OrderForm> {
 class OrderButtonCart extends StatefulWidget {
   const OrderButtonCart(
       {Key key,
+      @required this.formKey,
       @required this.cart,
       @required this.address,
       @required this.phone})
       : super(key: key);
 
+  final GlobalKey<FormState> formKey;
   final Cart cart;
   final String address;
   final String phone;
@@ -161,9 +176,9 @@ class OrderButtonCart extends StatefulWidget {
 
 class _OrderButtonCartState extends State<OrderButtonCart> {
   var _isLoading = false;
-
   @override
   Widget build(BuildContext context) {
+    final phone = Provider.of<PhoneNumber>(context).phoneNumber;
     final auth = Provider.of<Auth>(context);
     final curUser = auth.curUser;
     return FlatButton(
@@ -171,11 +186,15 @@ class _OrderButtonCartState extends State<OrderButtonCart> {
       onPressed: (widget.cart.totalAmount <= 0 || _isLoading)
           ? null
           : () async {
+              if (!widget.formKey.currentState.validate()) {
+                return;
+              }
               setState(() {
                 _isLoading = true;
               });
-              await Provider.of<Orders>(context, listen: false).addOrder(
-                widget.cart.items.values.toList(),
+              var order =
+                  await Provider.of<Orders>(context, listen: false).addOrder(
+                widget.cart.products,
                 widget.cart.totalAmount,
                 curUser.uid,
                 widget.address,
@@ -184,8 +203,29 @@ class _OrderButtonCartState extends State<OrderButtonCart> {
               setState(() {
                 _isLoading = false;
               });
-              widget.cart.clear();
-              Navigator.of(context).pushNamed(OrderPlaced.routeName, arguments: widget.cart.totalAmount);
+              widget.cart.clear(curUser.uid);
+              showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      title: Text("Order Placed"),
+                      content: Text(
+                          "Your order ID is ${order.id}. Pay ₹${order.amount} to $phone and send a screenshot to this number along with your order ID"),
+                      actions: <Widget>[
+                        MaterialButton(
+                          onPressed: () {
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                                DepartmentOverviewScreen.routeName,
+                                ModalRoute.withName('/'));
+                          },
+                          child: Text('Okay'),
+                        )
+                      ],
+                    );
+                  });
             },
       textColor: Theme.of(context).primaryColor,
     );
@@ -195,12 +235,14 @@ class _OrderButtonCartState extends State<OrderButtonCart> {
 class OrderButton extends StatefulWidget {
   const OrderButton({
     Key key,
+    @required this.formKey,
     @required this.product,
     @required this.address,
     @required this.phone,
     @required this.quantity,
   }) : super(key: key);
 
+  final GlobalKey<FormState> formKey;
   final Product product;
   final String address;
   final String phone;
@@ -217,32 +259,91 @@ class _OrderButtonState extends State<OrderButton> {
   Widget build(BuildContext context) {
     final auth = Provider.of<Auth>(context);
     final curUser = auth.curUser;
+    final phone = Provider.of<PhoneNumber>(context).phoneNumber;
     return FlatButton(
       child: _isLoading ? CircularProgressIndicator() : Text('ORDER NOW'),
       onPressed: (widget.product.price * widget.quantity <= 0 || _isLoading)
           ? null
           : () async {
-              setState(() {
-                _isLoading = true;
-              });
-              await Provider.of<Orders>(context, listen: false).addOrder(
-                [
+              if (!widget.formKey.currentState.validate()) {
+                return;
+              }
+              if (widget.quantity > widget.product.quantity) {
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      title: Text('Error!'),
+                      content: Text(
+                          'Quantity entered for product ${widget.product.name} not available'),
+                      actions: <Widget>[
+                        MaterialButton(
+                          onPressed: () => Navigator.popUntil(
+                              context,
+                              ModalRoute.withName(
+                                  ProductDetailScreen.routeName)),
+                          child: Text('Okay'),
+                        )
+                      ],
+                    );
+                  },
+                );
+              } else {
+                setState(() {
+                  _isLoading = true;
+                });
+                Provider.of<Departments>(context).updateQuant([
                   CartItem(
+                    productId: widget.product.id,
+                    quantity: widget.quantity,
+                    price: widget.product.price,
+                    prodName: widget.product.name,
+                  )
+                ]);
+                var order =
+                    await Provider.of<Orders>(context, listen: false).addOrder(
+                  [
+                    CartItem(
+                      prodName: widget.product.name,
                       productId: widget.product.id,
-                      id: DateTime.now().toString(),
-                      name: widget.product.name,
                       quantity: widget.quantity,
-                      price: widget.product.price)
-                ],
-                widget.quantity * widget.product.price,
-                curUser.uid,
-                widget.address,
-                widget.phone,
-              );
-              setState(() {
-                _isLoading = false;
-              });
-              Navigator.of(context).pushNamed(OrderPlaced.routeName, arguments: widget.quantity * widget.product.price);
+                      price: widget.product.price,
+                    )
+                  ],
+                  widget.quantity * widget.product.price,
+                  curUser.uid,
+                  widget.address,
+                  widget.phone,
+                );
+                setState(() {
+                  _isLoading = false;
+                });
+                showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        title: Text("Order Placed"),
+                        content: Text(
+                            "Your order ID is ${order.id}.\nPay ₹${order.amount} to $phone and send a screenshot to this number along with your order ID"),
+                        actions: <Widget>[
+                          MaterialButton(
+                            onPressed: () {
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                                  DepartmentOverviewScreen.routeName,
+                                  ModalRoute.withName('/'));
+                            },
+                            child: Text('Okay'),
+                          )
+                        ],
+                      );
+                    });
+              }
             },
       textColor: Theme.of(context).primaryColor,
     );
