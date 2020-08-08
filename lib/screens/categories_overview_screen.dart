@@ -22,7 +22,7 @@ class CategoryOverviewScreen extends StatefulWidget {
 class _CategoryOverviewScreenState extends State<CategoryOverviewScreen> {
   var _isLoading = false;
   var _isInit = true;
-  String deptId;
+  String deptName;
 
   @override
   void initState() {
@@ -35,8 +35,8 @@ class _CategoryOverviewScreenState extends State<CategoryOverviewScreen> {
       setState(() {
         _isLoading = true;
       });
-      deptId = ModalRoute.of(context).settings.arguments as String;
-      Provider.of<Departments>(context).getCats(deptId).then((_) {
+      deptName = ModalRoute.of(context).settings.arguments as String;
+      Provider.of<Departments>(context).getCats(deptName).then((_) {
         setState(() {
           _isLoading = false;
         });
@@ -62,7 +62,7 @@ class _CategoryOverviewScreenState extends State<CategoryOverviewScreen> {
       _isLoading = true;
     });
 
-    Provider.of<Departments>(context).getCats(deptId).then((_) {
+    Provider.of<Departments>(context).getCats(deptName).then((_) {
       setState(() {
         _isLoading = false;
       });
@@ -86,7 +86,7 @@ class _CategoryOverviewScreenState extends State<CategoryOverviewScreen> {
     return Scaffold(
       appBar: AppBar(
         title:
-            Text(dept.departments.firstWhere((dept) => dept.id == deptId).name),
+            Text(dept.departments.firstWhere((dept) => dept.name == deptName).name),
         actions: <Widget>[
           Consumer<Cart>(
             builder: (_, cart, ch) => Badge(
@@ -124,7 +124,7 @@ class _CategoryOverviewScreenState extends State<CategoryOverviewScreen> {
                       mainAxisSpacing: 10),
                   itemBuilder: (ctx, i) => ChangeNotifierProvider.value(
                         value: dept.categories[i],
-                        child: CategoryItem(deptId),
+                        child: CategoryItem(deptName),
                       )),
             ),
     );

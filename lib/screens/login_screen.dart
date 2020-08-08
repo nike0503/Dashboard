@@ -22,7 +22,8 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              FlutterLogo(size: 150),
+              Image(image: AssetImage("assets/google_logo.png"), height: 150, alignment: Alignment.center,),
+              //FlutterLogo(size: 150),
               SizedBox(height: 50),
               _signInButton(auth),
             ],
@@ -37,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
       splashColor: Colors.grey,
       onPressed: () {
         auth.signInWithGoogle().whenComplete(() {
-          Provider.of<Cart>(context).getCart(auth.curUser.uid);
+          Provider.of<Cart>(context).getCart(auth.curUser.email);
           Navigator.of(context).pop();
         });
       },

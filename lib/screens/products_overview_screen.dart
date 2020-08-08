@@ -23,8 +23,8 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
   var _isLoading = false;
   var _isInit = true;
   var ids;
-  String catId;
-  String deptId;
+  String catName;
+  String deptName;
 
   @override
   void initState() {
@@ -38,9 +38,9 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
         _isLoading = true;
       });
       ids = ModalRoute.of(context).settings.arguments as List;
-      catId = ids[0];
-      deptId = ids[1];
-      Provider.of<Departments>(context).getProds(deptId, catId).then((_) {
+      catName = ids[0];
+      deptName = ids[1];
+      Provider.of<Departments>(context).getProds(deptName, catName).then((_) {
         setState(() {
           _isLoading = false;
         });
@@ -66,7 +66,7 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
       _isLoading = true;
     });
 
-    Provider.of<Departments>(context).getProds(deptId, catId).then((_) {
+    Provider.of<Departments>(context).getProds(deptName, catName).then((_) {
       setState(() {
         _isLoading = false;
       });
@@ -88,7 +88,7 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
     final curUser = Provider.of<Auth>(context).curUser;
     return Scaffold(
       appBar: AppBar(
-        title: Text(dept.categories.firstWhere((cat) => cat.id == catId).name),
+        title: Text(dept.categories.firstWhere((cat) => cat.name == catName).name),
         actions: <Widget>[
           Consumer<Cart>(
             builder: (_, cart, ch) => Badge(
@@ -121,6 +121,8 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
                     color: Colors.teal,
                     showChildOpacityTransition: false,
                     child: ListView.builder(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.all(8),
                       itemCount: dept.products.length,
                       itemBuilder: (ctx, i) => ChangeNotifierProvider.value(
                         value: dept.products[i],

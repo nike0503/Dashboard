@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import './screens/splash_screen.dart';
@@ -15,7 +16,13 @@ import './providers/sign_in.dart';
 import './providers/orders.dart';
 import './providers/phone_number.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
   runApp(MyApp());
 }
 
@@ -42,7 +49,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Shop',
+        title: 'Rahul Enterprises',
         theme: ThemeData(
           primaryColor: Colors.teal,
           accentColor: Colors.amber,

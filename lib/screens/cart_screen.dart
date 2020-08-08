@@ -3,8 +3,10 @@ import 'package:Dashboard/providers/product.dart';
 import 'package:Dashboard/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:progress_dialog/progress_dialog.dart';
 
 import '../providers/cart.dart' show Cart;
+import '../providers/orders.dart';
 import '../providers/departments.dart';
 import '../providers/sign_in.dart';
 import '../widgets/cart_item.dart';
@@ -19,22 +21,65 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  var _isLoading = false;
+  var _isLoading = true;
+  var isEmpty = false;
+  List<OrderProd> _products = [];
 
   @override
   Widget build(BuildContext context) {
-    final cart = Provider.of<Cart>(context);
     final auth = Provider.of<Auth>(context);
     final curUser = auth.curUser;
     final dept = Provider.of<Departments>(context);
-    // if (curUser != null) {
-    //   _isLoading = true;
-    //   cart.getCart(curUser.uid).then((_) {
-    //     setState(() {
-    //       _isLoading = false;
-    //     });
-    //   });
-    // }
+    final cart = Provider.of<Cart>(context);
+    ProgressDialog pr = new ProgressDialog(context);
+    pr.style(
+        message: 'Please Wait...',
+        borderRadius: 10.0,
+        backgroundColor: Colors.white,
+        progressWidget: CircularProgressIndicator(),
+        elevation: 10.0,
+        insetAnimCurve: Curves.easeInOut,
+        progress: 0.0,
+        maxProgress: 100.0,
+        progressTextStyle: TextStyle(
+            color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+        messageTextStyle: TextStyle(
+            color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600));
+    List<OrderProd> prods = [];
+    if (cart.products.length == 0) {
+      _products = [];
+      setState(() {
+        _isLoading = false;
+        isEmpty = true;
+      });
+    } else {
+      setState(() {
+        isEmpty = false;
+      });
+      for (int i = 0; i < cart.products.length; i++) {
+        if(cart.products.length == 0) {
+          break;
+        }
+        dept
+            .getProdById(
+                cart.products[i].prodName)
+            .then((prod) {
+          prods.add(OrderProd(
+              status: 'pending',
+              admin: prod.adminName,
+              prodName: prod.name,
+              price: prod.price,
+              quantity: cart.products[i].quantity));
+        }).then((_) {
+          if (this.mounted) {
+            setState(() {
+              _products = prods;
+              _isLoading = false;
+            });
+          }
+        });
+      }
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text('Your Cart'),
@@ -61,17 +106,19 @@ class _CartScreenState extends State<CartScreen> {
                           children: <Widget>[
                             Text(
                               'Total',
-                              style: TextStyle(fontSize: 20),
+                              style: TextStyle(fontSize: 22),
                             ),
                             Spacer(),
                             Chip(
-                              label: Text(
-                                '₹${cart.totalAmount.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  color: Theme.of(context)
-                                      .primaryTextTheme
-                                      .title
-                                      .color,
+                              label: FittedBox(
+                                child: Text(
+                                  '₹${cart.totalAmount(_products).toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    color: Theme.of(context)
+                                        .primaryTextTheme
+                                        .title
+                                        .color,
+                                  ),
                                 ),
                               ),
                               backgroundColor: Theme.of(context).primaryColor,
@@ -79,7 +126,10 @@ class _CartScreenState extends State<CartScreen> {
                             //OrderButton(cart: cart)
                             FlatButton(
                               textColor: Theme.of(context).primaryColor,
-                              child: Text('ORDER NOW'),
+                              child: Text(
+                                'ORDER NOW',
+                                style: TextStyle(fontSize: 18),
+                              ),
                               onPressed: curUser == null
                                   ? () {
                                       Navigator.of(context)
@@ -88,18 +138,23 @@ class _CartScreenState extends State<CartScreen> {
                                   : cart.products.length == 0
                                       ? () {}
                                       : () async {
+                                          pr.show();
                                           List<Product> errProd = [];
                                           for (int i = 0;
                                               i < cart.products.length;
                                               i++) {
+                                            if(cart.products.length == 0) {
+                                              break;
+                                            }
                                             Product prod =
                                                 await dept.getProdById(
-                                                    cart.products[i].productId);
+                                                    cart.products[i].prodName);
                                             if (cart.products[i].quantity >
                                                 prod.quantity) {
                                               errProd.add(prod);
                                             }
                                           }
+                                          pr.hide();
                                           if (errProd.length != 0) {
                                             String prodNames = '';
                                             for (int i = 0;
@@ -148,17 +203,24 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                     ),
                     SizedBox(height: 10),
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: cart.products.length,
-                        itemBuilder: (ctx, i) => CartItem(
-                          cart.products[i].prodName,
-                          cart.products[i].price,
-                          cart.products[i].productId,
-                          cart.products[i].quantity,
-                        ),
+                    if (isEmpty)
+                      Center(
+                        child: Text('Cart Empty',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey[400])),
                       ),
-                    )
+                    if (!isEmpty)
+                      Expanded(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _products.length,
+                          itemBuilder: (ctx, i) => CartItem(
+                            _products[i].prodName,
+                            _products[i].price,
+                            _products[i].quantity,
+                          ),
+                        ),
+                      )
                   ],
                 ),
     );

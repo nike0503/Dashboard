@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../providers/sign_in.dart';
+import '../providers/cart.dart';
 import './departments_overview_screen.dart';
 import '../providers/departments.dart';
 import '../providers/phone_number.dart';
@@ -19,11 +22,21 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
-  void didChangeDependencies() {
+  void didChangeDependencies() async {
     if (_isInit) {
+      final auth = Provider.of<Auth>(context);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      var uid = prefs.getString('id');
+      if (uid != null) {
+        auth.autoLogin().then((_) {
+          print(auth.curUser.email);
+          Provider.of<Cart>(context).getCart(auth.curUser.email);
+        });
+      }
       Provider.of<Departments>(context).getDepts().then((_) {
         Provider.of<PhoneNumber>(context).getPhoneNo().then((_) {
-          Navigator.of(context).pushReplacementNamed(DepartmentOverviewScreen.routeName);
+          Navigator.of(context)
+              .pushReplacementNamed(DepartmentOverviewScreen.routeName);
         });
       });
     }

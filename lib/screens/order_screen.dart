@@ -48,7 +48,7 @@ class OrdersScreen extends StatelessWidget {
             )
           : FutureBuilder(
               future: Provider.of<Orders>(context,listen: false)
-                  .fetchAndSetOrders(curUser.uid.toString()),
+                  .fetchAndSetOrders(curUser.email),
               builder: (ctx, dataSnapshot) {
                 if (dataSnapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());

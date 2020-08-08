@@ -47,7 +47,7 @@ class ProductDetailScreen extends StatelessWidget {
                             }
                           : () {
                               cart.addCartElement(
-                                  curUser.uid, loadedProduct.id, loadedProduct.name, loadedProduct.price);
+                                  curUser.email, loadedProduct.name);
                               Scaffold.of(context).hideCurrentSnackBar();
                               Scaffold.of(context).showSnackBar(
                                 SnackBar(
@@ -59,7 +59,7 @@ class ProductDetailScreen extends StatelessWidget {
                                     label: 'UNDO',
                                     onPressed: () {
                                       cart.removeSingleItem(
-                                          curUser.uid, loadedProduct.id);
+                                          curUser.email, loadedProduct.name);
                                     },
                                   ),
                                 ),
@@ -121,9 +121,11 @@ class ProductDetailScreen extends StatelessWidget {
         child: Column(
           children: <Widget>[
             Container(
-              height: 300,
+              height: (MediaQuery.of(context).size.height -
+                      AppBar().preferredSize.height) *
+                  0.45,
               width: double.infinity,
-              child: CachedNetworkImage(
+              child: loadedProduct.imageUrl == '' ? Text('No Image') : CachedNetworkImage(
                 imageUrl: loadedProduct.imageUrl,
                 imageBuilder: (context, imageProvider) => Container(
                   decoration: BoxDecoration(
@@ -133,7 +135,12 @@ class ProductDetailScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                placeholder: (context, url) => CircularProgressIndicator(),
+                placeholder: (context, url) => Center(
+                  child: SizedBox(
+                      height: 35,
+                      width: 35,
+                      child: CircularProgressIndicator()),
+                ),
                 errorWidget: (context, url, error) => const Icon(Icons.error),
               ),
             ),

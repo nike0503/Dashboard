@@ -5,14 +5,14 @@ import '../screens/products_overview_screen.dart';
 import '../providers/category.dart';
 
 class CategoryItem extends StatelessWidget {
-  final deptId;
+  final deptName;
 
-  CategoryItem(this.deptId);
+  CategoryItem(this.deptName);
 
-  void selectCategory(BuildContext ctx, String catId, deptId) {
+  void selectCategory(BuildContext ctx, String catName, deptName) {
     Navigator.of(ctx).pushNamed(
       ProductOverviewScreen.routeName,
-      arguments: [catId, deptId],
+      arguments: [catName, deptName],
     );
   }
 
@@ -22,7 +22,7 @@ class CategoryItem extends StatelessWidget {
     final category = Provider.of<Category>(context, listen: false);
     return InkWell(
       onTap: () {
-        selectCategory(context, category.id, deptId);
+        selectCategory(context, category.name, deptName);
       },
       splashColor: Theme.of(context).primaryColor,
       borderRadius: BorderRadius.circular(15),
@@ -31,6 +31,7 @@ class CategoryItem extends StatelessWidget {
         child: Text(
           category.name,
           style: Theme.of(context).textTheme.title,
+          textAlign: TextAlign.center,
         ),
         decoration: BoxDecoration(
           gradient: LinearGradient(

@@ -1,14 +1,15 @@
-import 'package:Dashboard/providers/departments.dart';
-import 'package:Dashboard/screens/product_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
+import '../screens/product_detail_screen.dart';
 import '../screens/departments_overview_screen.dart';
 import '../providers/cart.dart';
 import '../providers/product.dart';
 import '../providers/sign_in.dart';
 import '../providers/orders.dart';
 import '../providers/phone_number.dart';
+import '../providers/departments.dart';
 
 class OrderForm extends StatefulWidget {
   const OrderForm({
@@ -183,7 +184,7 @@ class _OrderButtonCartState extends State<OrderButtonCart> {
     final curUser = auth.curUser;
     return FlatButton(
       child: _isLoading ? CircularProgressIndicator() : Text('ORDER NOW'),
-      onPressed: (widget.cart.totalAmount <= 0 || _isLoading)
+      onPressed: (_isLoading)
           ? null
           : () async {
               if (!widget.formKey.currentState.validate()) {
@@ -192,18 +193,30 @@ class _OrderButtonCartState extends State<OrderButtonCart> {
               setState(() {
                 _isLoading = true;
               });
+              List<OrderProd> prods = [];
+              for (int i = 0; i < widget.cart.products.length; i++) {
+                var product = await Provider.of<Departments>(context)
+                    .getProdById(widget.cart.products[i].prodName);
+                prods.add(OrderProd(
+                  status: 'pending',
+                  admin: product.adminName,
+                  prodName: product.name,
+                  price: product.price,
+                  quantity: widget.cart.products[i].quantity,
+                ));
+              }
               var order =
                   await Provider.of<Orders>(context, listen: false).addOrder(
-                widget.cart.products,
-                widget.cart.totalAmount,
-                curUser.uid,
+                prods,
+                widget.cart.totalAmount(prods),
+                curUser.email,
                 widget.address,
                 widget.phone,
               );
               setState(() {
                 _isLoading = false;
               });
-              widget.cart.clear(curUser.uid);
+              widget.cart.clear(curUser.email);
               showDialog(
                   context: context,
                   builder: (context) {
@@ -213,8 +226,15 @@ class _OrderButtonCartState extends State<OrderButtonCart> {
                       ),
                       title: Text("Order Placed"),
                       content: Text(
-                          "Your order ID is ${order.id}. Pay ₹${order.amount} to $phone and send a screenshot to this number along with your order ID"),
+                          "Your order ID is ${order.id}. Pay ₹${order.amount} to $phone and send a screenshot to this number along with your email and  order ID, your contact ${widget.phone}"),
                       actions: <Widget>[
+                        MaterialButton(
+                          onPressed: () {
+                            Clipboard.setData(
+                                new ClipboardData(text: "${order.id}"));
+                          },
+                          child: Text('Copy ID'),
+                        ),
                         MaterialButton(
                           onPressed: () {
                             Navigator.of(context).pushNamedAndRemoveUntil(
@@ -222,7 +242,7 @@ class _OrderButtonCartState extends State<OrderButtonCart> {
                                 ModalRoute.withName('/'));
                           },
                           child: Text('Okay'),
-                        )
+                        ),
                       ],
                     );
                   });
@@ -262,7 +282,7 @@ class _OrderButtonState extends State<OrderButton> {
     final phone = Provider.of<PhoneNumber>(context).phoneNumber;
     return FlatButton(
       child: _isLoading ? CircularProgressIndicator() : Text('ORDER NOW'),
-      onPressed: (widget.product.price * widget.quantity <= 0 || _isLoading)
+      onPressed: (_isLoading)
           ? null
           : () async {
               if (!widget.formKey.currentState.validate()) {
@@ -297,24 +317,23 @@ class _OrderButtonState extends State<OrderButton> {
                 });
                 Provider.of<Departments>(context).updateQuant([
                   CartItem(
-                    productId: widget.product.id,
                     quantity: widget.quantity,
-                    price: widget.product.price,
                     prodName: widget.product.name,
                   )
                 ]);
                 var order =
                     await Provider.of<Orders>(context, listen: false).addOrder(
                   [
-                    CartItem(
+                    OrderProd(
+                      status: 'pending',
+                      admin: widget.product.adminName,
                       prodName: widget.product.name,
-                      productId: widget.product.id,
                       quantity: widget.quantity,
                       price: widget.product.price,
                     )
                   ],
                   widget.quantity * widget.product.price,
-                  curUser.uid,
+                  curUser.email,
                   widget.address,
                   widget.phone,
                 );
@@ -330,8 +349,15 @@ class _OrderButtonState extends State<OrderButton> {
                         ),
                         title: Text("Order Placed"),
                         content: Text(
-                            "Your order ID is ${order.id}.\nPay ₹${order.amount} to $phone and send a screenshot to this number along with your order ID"),
+                            "Your order ID is ${order.id}.\nPay ₹${order.amount} to $phone and send a screenshot to this number along with your email and order ID"),
                         actions: <Widget>[
+                          MaterialButton(
+                            onPressed: () {
+                              Clipboard.setData(
+                                  new ClipboardData(text: "${order.id}"));
+                            },
+                            child: Text('Copy ID'),
+                          ),
                           MaterialButton(
                             onPressed: () {
                               Navigator.of(context).pushNamedAndRemoveUntil(
@@ -339,7 +365,7 @@ class _OrderButtonState extends State<OrderButton> {
                                   ModalRoute.withName('/'));
                             },
                             child: Text('Okay'),
-                          )
+                          ),
                         ],
                       );
                     });

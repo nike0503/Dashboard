@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../providers/departments.dart';
 import '../providers/sign_in.dart';
 import '../screens/order_screen.dart';
 import '../screens/login_screen.dart';
@@ -26,15 +28,24 @@ class _AppDrawerState extends State<AppDrawer> {
           ),
           Divider(),
           ListTile(
-            leading: Icon(Icons.shop, color: Colors.green,),
+            leading: Icon(
+              Icons.shop,
+              color: Colors.green,
+            ),
             title: Text('Shop'),
             onTap: () {
-              Navigator.of(context).pushReplacementNamed(DepartmentOverviewScreen.routeName);
+              Provider.of<Departments>(context).getDepts().then((_) {
+                Navigator.of(context)
+                    .pushReplacementNamed(DepartmentOverviewScreen.routeName);
+              });
             },
           ),
           Divider(),
           ListTile(
-            leading: Icon(Icons.payment, color: Colors.blue,),
+            leading: Icon(
+              Icons.payment,
+              color: Colors.blue,
+            ),
             title: Text('Orders'),
             onTap: () {
               Navigator.of(context)
@@ -52,7 +63,10 @@ class _AppDrawerState extends State<AppDrawer> {
 
   Widget loginLogout(String text, Auth auth) {
     return ListTile(
-      leading: Icon(Icons.exit_to_app, color: Colors.red,),
+      leading: Icon(
+        Icons.exit_to_app,
+        color: Colors.red,
+      ),
       title: Text(text),
       onTap: text == 'Login'
           ? () {

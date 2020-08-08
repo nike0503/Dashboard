@@ -10,7 +10,6 @@ class Departments with ChangeNotifier {
   List<Department> _departments = [];
   List<Category> _categories = [];
   List<Product> _products = [];
-  Product _reqProd;
 
   Future<void> getDepts() async {
     List<Department> _departmentList = [];
@@ -21,7 +20,6 @@ class Departments with ChangeNotifier {
 
     for (int i = 0; i < _departList.length; i++) {
       _departmentList.add(Department(
-        id: _departList[i]['id'],
         name: _departList[i]['name'],
       ));
     }
@@ -30,18 +28,17 @@ class Departments with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> getCats(String deptId) async {
+  Future<void> getCats(String deptName) async {
     List<Category> _categoriesList = [];
     List _catList = await Firestore.instance
         .collection('Departments')
-        .document(deptId)
+        .document(deptName)
         .collection('Categories')
         .getDocuments()
         .then((snap) => snap.documents);
 
     for (int i = 0; i < _catList.length; i++) {
       _categoriesList.add(Category(
-        id: _catList[i]['id'],
         name: _catList[i]['name'],
       ));
     }
@@ -50,33 +47,34 @@ class Departments with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> getProds(String deptId, String catId) async {
+  Future<void> getProds(String deptName, String catName) async {
     List<Product> _productsList = [];
     List _prodList = await Firestore.instance
         .collection('Departments')
-        .document(deptId)
+        .document(deptName)
         .collection("Categories")
-        .document(catId)
+        .document(catName)
         .collection('Products')
         .getDocuments()
         .then((snap) => snap.documents);
 
     for (int i = 0; i < _prodList.length; i++) {
       _productsList.add(Product(
-          id: _prodList[i]['id'],
-          name: _prodList[i]['name'],
-          price: _prodList[i]['price'],
-          quantity: _prodList[i]['quantity'],
-          isAvailable: _prodList[i]['isAvailable'],
-          description: _prodList[i]['description'],
-          imageUrl: _prodList[i]['imageUrl']));
+        adminName: _prodList[i]['admin'],
+        name: _prodList[i]['name'],
+        price: _prodList[i]['price'],
+        quantity: _prodList[i]['quantity'],
+        isAvailable: _prodList[i]['isAvailable'],
+        description: _prodList[i]['description'],
+        imageUrl: _prodList[i]['imageUrl'],
+      ));
     }
 
     _products = _productsList;
     notifyListeners();
   }
 
-  Future<Product> getProdById(String id) async {
+  Future<Product> getProdById(String name) async {
     Product prod;
     List _departList = await Firestore.instance
         .collection('Departments')
@@ -99,31 +97,30 @@ class Departments with ChangeNotifier {
             .getDocuments()
             .then((snap) => snap.documents);
         for (int k = 0; k < _prodList.length; k++) {
-          if (_prodList[k]['id'] == id) {
+          if (_prodList[k]['name'] == name) {
             prod = Product(
-                id: _prodList[k]['id'],
-                name: _prodList[k]['name'],
-                price: _prodList[k]['price'],
-                quantity: _prodList[k]['quantity'],
-                isAvailable: _prodList[k]['isAvailable'],
-                description: _prodList[k]['description'],
-                imageUrl: _prodList[k]['imageUrl']);
-            
+              adminName: _prodList[k]['admin'],
+              name: _prodList[k]['name'],
+              price: _prodList[k]['price'],
+              quantity: _prodList[k]['quantity'],
+              isAvailable: _prodList[k]['isAvailable'],
+              description: _prodList[k]['description'],
+              imageUrl: _prodList[k]['imageUrl'],
+            );
           }
         }
       }
     }
-    _reqProd = prod;
     notifyListeners();
     return prod;
   }
 
-  Future<void> updateQuant(List<CartItem> cartItems) async {
+  Future<void> updateQuant(List<CartItem> prods) async {
     List _departList = await Firestore.instance
         .collection('Departments')
         .getDocuments()
         .then((snap) => snap.documents);
-    for (int l = 0; l < cartItems.length; l++) {
+    for (int l = 0; l < prods.length; l++) {
       for (int i = 0; i < _departList.length; i++) {
         List _catList = await Firestore.instance
             .collection('Departments')
@@ -141,7 +138,7 @@ class Departments with ChangeNotifier {
               .getDocuments()
               .then((snap) => snap.documents);
           for (int k = 0; k < _prodList.length; k++) {
-            if (_prodList[k]['id'] == cartItems[l].productId) {
+            if (_prodList[k]['name'] == prods[l].prodName) {
               Firestore.instance
                   .collection('Departments')
                   .document(_departList[i].documentID.toString())
@@ -150,9 +147,8 @@ class Departments with ChangeNotifier {
                   .collection('Products')
                   .document(_prodList[k].documentID.toString())
                   .updateData({
-                'quantity': _prodList[k]['quantity'] - cartItems[l].quantity,
-                'isAvailable':
-                    _prodList[k]['quantity'] - cartItems[l].quantity != 0
+                'quantity': _prodList[k]['quantity'] - prods[l].quantity,
+                'isAvailable': _prodList[k]['quantity'] - prods[l].quantity != 0
               });
             }
           }
@@ -173,13 +169,4 @@ class Departments with ChangeNotifier {
   List<Product> get products {
     return [..._products];
   }
-
-  Product getProductById() {
-    return _reqProd;
-  }
-
-  // void addData() {
-  //   const url = 'https://shop-f09c8.firebaseio.com/departments.json';
-  //   http.post(url, body: json.encode({'name': Department, 'categories': }));
-  // }
 }

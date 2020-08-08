@@ -27,25 +27,25 @@ class ProductItem extends StatelessWidget {
             vertical: 4,
           ),
           child: Padding(
-            padding: EdgeInsets.all(8),
+            padding: EdgeInsets.all(4),
             child: ListTile(
+              dense: true,
               leading: CircleAvatar(
                 //backgroundImage: //=====isme daal de firbase se======,
                 //radius: //= accordingly,
                 child: Padding(
                   padding: EdgeInsets.all(5),
-                  child: Image.network(
+                  child: product.imageUrl == "" ? Text('') : Image.network(
                     product.imageUrl,
-                    height: 100,
                     width: double.infinity,
                     fit: BoxFit.contain,
                   ),
                 ),
               ),
-              title: Text(product.name),
+              title: Text(product.name, style: TextStyle(fontSize: 20),),
               subtitle: product.isAvailable
-                  ? Text('Available   ₹${product.price}')
-                  : Text('Out of stock'),
+                  ? Text('Available   ₹${product.price}', style: TextStyle(fontSize: 15),)
+                  : Text('Out of stock', style: TextStyle(fontSize: 15),),
               trailing: Column(
                 children: <Widget>[
                   IconButton(
@@ -65,8 +65,8 @@ class ProductItem extends StatelessWidget {
                             );
                           }
                         : () {
-                            cart.addCartElement(curUser.uid, product.id,
-                                product.name, product.price);
+                            cart.addCartElement(curUser.email,
+                                product.name);
                             Scaffold.of(context).hideCurrentSnackBar();
                             Scaffold.of(context).showSnackBar(
                               SnackBar(
@@ -78,7 +78,7 @@ class ProductItem extends StatelessWidget {
                                   label: 'UNDO',
                                   onPressed: () {
                                     cart.removeSingleItem(
-                                        curUser.uid, product.id);
+                                        curUser.email, product.name);
                                   },
                                 ),
                               ),

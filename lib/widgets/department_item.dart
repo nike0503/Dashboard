@@ -6,10 +6,10 @@ import '../screens/categories_overview_screen.dart';
 
 class DepartmentItem extends StatelessWidget {
  
-  void selectDepartment(BuildContext ctx, String id) {
+  void selectDepartment(BuildContext ctx, String name) {
     Navigator.of(ctx).pushNamed(
       CategoryOverviewScreen.routeName,
-      arguments: id,
+      arguments: name,
     );
   }
 
@@ -18,7 +18,7 @@ class DepartmentItem extends StatelessWidget {
     final department = Provider.of<Department>(context);
     return InkWell(
       onTap: () {
-        selectDepartment(context, department.id);
+        selectDepartment(context, department.name);
       },
       splashColor: Colors.white,
       borderRadius: BorderRadius.circular(15),
